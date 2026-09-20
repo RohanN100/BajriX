@@ -14,3 +14,18 @@ frontend/.vite/
 Thumbs.db
 .vscode/
 *.log
+# Eclipse / Spring Tool Suite
+**/.classpath
+**/.project
+**/.settings/
+
+# Java / Spring Boot build files
+**/target/
+
+# Frontend dependencies and build
+**/node_modules/
+**/dist/
+
+# Environment and secret files
+.env
+.env.*
