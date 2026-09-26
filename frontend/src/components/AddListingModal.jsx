@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Package, AlertCircle } from 'lucide-react';
+import { X, Plus, Package, AlertCircle, Building2, Store } from 'lucide-react';
 import { api } from '../api';
 
-export default function AddListingModal({ sellerId, onClose, onListingCreated, showToast }) {
+export default function AddListingModal({
+  sellerId: initialSellerId,
+  sellers = [],
+  onSellerChange,
+  onClose,
+  onListingCreated,
+  showToast
+}) {
+  const [activeSellerId, setActiveSellerId] = useState(initialSellerId || (sellers[0]?.id || ''));
   const [unlistedProducts, setUnlistedProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [price, setPrice] = useState('');
@@ -14,26 +22,43 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
 
   useEffect(() => {
     async function loadUnlisted() {
+      if (!activeSellerId) return;
       setLoading(true);
+      setError(null);
       try {
-        const data = await api.getUnlistedProducts(sellerId);
+        const data = await api.getUnlistedProducts(activeSellerId);
         setUnlistedProducts(data || []);
         if (data && data.length > 0) {
           setSelectedProductId(data[0].id);
+        } else {
+          setSelectedProductId('');
         }
       } catch (err) {
-        setError('Failed to load unlisted products from catalog');
+        setError('Failed to load unlisted products for the selected seller catalog');
       } finally {
         setLoading(false);
       }
     }
     loadUnlisted();
-  }, [sellerId]);
+  }, [activeSellerId]);
+
+  const handleSellerSelect = (newSellerId) => {
+    setActiveSellerId(newSellerId);
+    if (onSellerChange) {
+      const selected = sellers.find((s) => s.id === newSellerId);
+      if (selected) onSellerChange(selected);
+    }
+  };
 
   const selectedProduct = unlistedProducts.find((p) => p.id === selectedProductId);
+  const currentSellerObj = sellers.find((s) => s.id === activeSellerId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!activeSellerId) {
+      setError('Please select a seller account');
+      return;
+    }
     if (!selectedProductId || !price || stock === '') {
       setError('Please provide all mandatory fields');
       return;
@@ -43,7 +68,7 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
     setError(null);
 
     try {
-      await api.createListing(sellerId, {
+      await api.createListing(activeSellerId, {
         productId: selectedProductId,
         price: parseFloat(price),
         availableStock: parseInt(stock, 10),
@@ -51,20 +76,24 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
         status: 'ACTIVE'
       });
 
-      showToast({
-        type: 'success',
-        title: 'Listing Created',
-        message: 'Product successfully added to your active catalog!'
-      });
+      if (showToast) {
+        showToast({
+          type: 'success',
+          title: 'Listing Created',
+          message: `Product successfully listed for ${currentSellerObj?.businessName || 'Seller'}!`
+        });
+      }
       onListingCreated();
       onClose();
     } catch (err) {
       setError(err.data?.message || err.message || 'Failed to create listing');
-      showToast({
-        type: 'error',
-        title: 'Listing Failed',
-        message: err.data?.message || err.message
-      });
+      if (showToast) {
+        showToast({
+          type: 'error',
+          title: 'Listing Failed',
+          message: err.data?.message || err.message
+        });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -80,8 +109,8 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
               <Plus className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Add Product to My Catalog</h3>
-              <p className="text-xs text-slate-500">Pick a standard catalog product and set your offering terms</p>
+              <h3 className="text-base font-bold text-slate-900">Add Product Listing to Seller</h3>
+              <p className="text-xs text-slate-500">Pick a seller account, select a product, and set price/stock</p>
             </div>
           </div>
           <button
@@ -102,12 +131,36 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
             </div>
           )}
 
+          {/* Seller Selection Dropdown */}
+          {sellers && sellers.length > 0 && (
+            <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1.5">
+              <label className="block text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <Store className="w-3.5 h-3.5 text-amber-600" />
+                Target Seller Account *
+              </label>
+              <select
+                value={activeSellerId}
+                onChange={(e) => handleSellerSelect(e.target.value)}
+                className="w-full bg-white border border-amber-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
+              >
+                {sellers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.businessName} ({s.city}, {s.state}) — Status: {s.status}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-amber-800/80">
+                You can switch between sellers to publish listings under different seller accounts.
+              </p>
+            </div>
+          )}
+
           {loading ? (
-            <div className="py-8 text-center text-xs text-slate-500">Loading available catalog products...</div>
+            <div className="py-8 text-center text-xs text-slate-500">Loading unlisted catalog products for this seller...</div>
           ) : unlistedProducts.length === 0 ? (
             <div className="py-8 text-center space-y-2">
               <Package className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="text-xs text-slate-600 font-medium">You have already listed all available catalog products!</p>
+              <p className="text-xs text-slate-600 font-medium">This seller has already listed all available catalog products!</p>
             </div>
           ) : (
             <>
@@ -119,7 +172,8 @@ export default function AddListingModal({ sellerId, onClose, onListingCreated, s
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer font-medium"
                 >
                   {unlistedProducts.map((p) => (
                     <option key={p.id} value={p.id}>

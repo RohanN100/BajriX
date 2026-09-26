@@ -1,12 +1,13 @@
 import React from 'react';
-import { ShoppingBag, Store, ShieldCheck, Clock, AlertTriangle, Building2 } from 'lucide-react';
+import { ShoppingBag, Store, ShieldCheck, Clock, AlertTriangle, Building2, ShieldAlert } from 'lucide-react';
 
 export default function Navbar({
   activeView,
   setActiveView,
   sellers,
   currentSeller,
-  setCurrentSeller
+  setCurrentSeller,
+  onOpenCreateProduct
 }) {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
@@ -34,6 +35,18 @@ export default function Navbar({
 
           {/* Persona Switcher & Controls */}
           <div className="flex items-center gap-3">
+            {/* Create Product Button */}
+            {onOpenCreateProduct && (
+              <button
+                type="button"
+                onClick={onOpenCreateProduct}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                title="Create New Canonical Product (POST /api/v1/products)"
+              >
+                <span>+ Create Product</span>
+              </button>
+            )}
+
             {/* View Switcher Pills */}
             <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
               <button
@@ -60,6 +73,19 @@ export default function Navbar({
               >
                 <Store className="w-4 h-4 text-orange-600" />
                 <span>Seller Portal</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveView('admin')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                  activeView === 'admin'
+                    ? 'bg-indigo-600 text-white shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldAlert className={`w-4 h-4 ${activeView === 'admin' ? 'text-white' : 'text-indigo-600'}`} />
+                <span>Admin Panel</span>
               </button>
             </div>
 

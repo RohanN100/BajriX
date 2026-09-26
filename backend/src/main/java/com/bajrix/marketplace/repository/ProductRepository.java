@@ -14,6 +14,9 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
+	
+	   boolean existsBySku(String sku);
+	   
     /**
      * Search products with optional category and search query filters.
      * Uses case-insensitive search across name, brand, and SKU.

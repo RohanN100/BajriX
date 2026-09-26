@@ -1,6 +1,7 @@
 package com.bajrix.marketplace.service;
 
 import com.bajrix.marketplace.domain.entity.Category;
+
 import com.bajrix.marketplace.domain.entity.Product;
 import com.bajrix.marketplace.domain.entity.SellerListing;
 import com.bajrix.marketplace.domain.enums.ListingStatus;
@@ -23,7 +24,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import com.bajrix.marketplace.dto.CreateProductRequest;
+import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class ProductCatalogService {
@@ -161,5 +163,36 @@ public class ProductCatalogService {
                 .icon(category.getIcon())
                 .description(category.getDescription())
                 .build();
+    }
+    
+    @Transactional
+    public ProductSummaryDTO createProduct(CreateProductRequest request) {
+
+        String sku = request.getSku().trim();
+
+        if (productRepository.existsBySku(sku)) {
+            throw new IllegalArgumentException(
+                    "Product with SKU already exists: " + sku
+            );
+        }
+
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Category not found with id: " + request.getCategoryId()
+                ));
+
+        Product product = Product.builder()
+                .name(request.getName().trim())
+                .brand(request.getBrand().trim())
+                .sku(sku)
+                .unitOfMeasure(request.getUnitOfMeasure().trim())
+                .description(request.getDescription())
+                .imageUrl(request.getImageUrl())
+                .category(category)
+                .build();
+
+        Product savedProduct = productRepository.save(product);
+
+        return enrichProductSummary(savedProduct);
     }
 }

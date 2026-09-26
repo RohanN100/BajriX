@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, ArrowUpDown, ShieldCheck, Check, PackageOpen, Layers, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, ShieldCheck, Check, PackageOpen, Layers, Sparkles, Plus } from 'lucide-react';
 import { api } from '../api';
 
-export default function BuyerExperience({ onSelectProduct }) {
+export default function BuyerExperience({ onSelectProduct, onOpenCreateProduct, refreshKey }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -61,7 +61,7 @@ export default function BuyerExperience({ onSelectProduct }) {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [selectedCategory, searchQuery, sortBy, sortDir, currentPage]);
+  }, [selectedCategory, searchQuery, sortBy, sortDir, currentPage, refreshKey]);
 
   return (
     <div className="space-y-6 pb-16">
@@ -109,22 +109,36 @@ export default function BuyerExperience({ onSelectProduct }) {
             )}
           </div>
 
-          {/* Sort Selection */}
+          {/* Sort Selection & Create Product Button */}
           <div className="flex items-center gap-2">
-            <ArrowUpDown className="w-4 h-4 text-slate-500 shrink-0" />
-            <select
-              value={`${sortBy}-${sortDir}`}
-              onChange={(e) => {
-                const [field, dir] = e.target.value.split('-');
-                setSortBy(field);
-                setSortDir(dir);
-              }}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
-            >
-              <option value="name-asc">Product Name: A to Z</option>
-              <option value="name-desc">Product Name: Z to A</option>
-              <option value="brand-asc">Brand: A to Z</option>
-            </select>
+            {onOpenCreateProduct && (
+              <button
+                type="button"
+                onClick={onOpenCreateProduct}
+                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                title="Create Product (POST /api/v1/products)"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Product</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-4 h-4 text-slate-500 shrink-0" />
+              <select
+                value={`${sortBy}-${sortDir}`}
+                onChange={(e) => {
+                  const [field, dir] = e.target.value.split('-');
+                  setSortBy(field);
+                  setSortDir(dir);
+                }}
+                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
+              >
+                <option value="name-asc">Product Name: A to Z</option>
+                <option value="name-desc">Product Name: Z to A</option>
+                <option value="brand-asc">Brand: A to Z</option>
+              </select>
+            </div>
           </div>
         </div>
 

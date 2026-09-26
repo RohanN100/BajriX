@@ -2,16 +2,20 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import BuyerExperience from './components/BuyerExperience';
 import SellerPortal from './components/SellerPortal';
+import AdminPanel from './components/AdminPanel';
 import ProductDetailModal from './components/ProductDetailModal';
+import CreateProductModal from './components/CreateProductModal';
 import Toast from './components/Toast';
 import { api } from './api';
 import { Building2, CheckCircle2, ShieldCheck, Database, Layers } from 'lucide-react';
 
 export default function App() {
-  const [activeView, setActiveView] = useState('buyer'); // 'buyer' | 'seller'
+  const [activeView, setActiveView] = useState('buyer'); // 'buyer' | 'seller' | 'admin'
   const [sellers, setSellers] = useState([]);
   const [currentSeller, setCurrentSeller] = useState(null);
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
+  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
+  const [productRefreshKey, setProductRefreshKey] = useState(0);
   const [toast, setToast] = useState(null);
 
   // Load sellers list for role switcher
@@ -52,6 +56,10 @@ export default function App() {
     }
   };
 
+  const handleProductCreated = () => {
+    setProductRefreshKey((prev) => prev + 1);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900">
       {/* App Header & Navigation */}
@@ -61,17 +69,27 @@ export default function App() {
         sellers={sellers}
         currentSeller={currentSeller}
         setCurrentSeller={setCurrentSeller}
+        onOpenCreateProduct={() => setIsCreateProductOpen(true)}
       />
 
       {/* Main Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {activeView === 'buyer' ? (
-          <BuyerExperience onSelectProduct={handleSelectProduct} />
-        ) : (
+          <BuyerExperience
+            onSelectProduct={handleSelectProduct}
+            onOpenCreateProduct={() => setIsCreateProductOpen(true)}
+            refreshKey={productRefreshKey}
+          />
+        ) : activeView === 'seller' ? (
           <SellerPortal
             currentSeller={currentSeller}
+            setCurrentSeller={setCurrentSeller}
+            sellers={sellers}
             showToast={showToast}
+            onOpenCreateProduct={() => setIsCreateProductOpen(true)}
           />
+        ) : (
+          <AdminPanel showToast={showToast} />
         )}
       </main>
 
@@ -80,6 +98,15 @@ export default function App() {
         <ProductDetailModal
           productDetail={selectedProductDetail}
           onClose={() => setSelectedProductDetail(null)}
+        />
+      )}
+
+      {/* Create Product Modal */}
+      {isCreateProductOpen && (
+        <CreateProductModal
+          onClose={() => setIsCreateProductOpen(false)}
+          onProductCreated={handleProductCreated}
+          showToast={showToast}
         />
       )}
 

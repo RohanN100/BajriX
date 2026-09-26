@@ -44,14 +44,34 @@ export const api = {
     return handleResponse(response);
   },
 
+  async createProduct(productData) {
+    const response = await fetch(`${BASE_URL}/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(productData)
+    });
+    return handleResponse(response);
+  },
+
   // Seller & System APIs
-  async getSellers() {
-    const response = await fetch(`${BASE_URL}/sellers`);
+  async getSellers(status) {
+    const url = status ? `${BASE_URL}/sellers?status=${encodeURIComponent(status)}` : `${BASE_URL}/sellers`;
+    const response = await fetch(url);
+    return handleResponse(response);
+  },
+
+  async getSellerDetails(sellerId) {
+    const response = await fetch(`${BASE_URL}/sellers/${sellerId}`);
     return handleResponse(response);
   },
 
   async getSellerListings(sellerId) {
-    const response = await fetch(`${BASE_URL}/seller/listings`, {
+    const query = new URLSearchParams();
+    if (sellerId) query.append('sellerId', sellerId);
+
+    const response = await fetch(`${BASE_URL}/seller/listings?${query.toString()}`, {
       headers: {
         'X-Seller-Id': sellerId
       }
@@ -60,7 +80,10 @@ export const api = {
   },
 
   async getUnlistedProducts(sellerId) {
-    const response = await fetch(`${BASE_URL}/seller/listings/unlisted-products`, {
+    const query = new URLSearchParams();
+    if (sellerId) query.append('sellerId', sellerId);
+
+    const response = await fetch(`${BASE_URL}/seller/listings/unlisted-products?${query.toString()}`, {
       headers: {
         'X-Seller-Id': sellerId
       }
@@ -99,6 +122,12 @@ export const api = {
         'X-Seller-Id': sellerId
       }
     });
+    return handleResponse(response);
+  },
+
+  // Admin APIs
+  async getAdminSellerListings(sellerId) {
+    const response = await fetch(`${BASE_URL}/admin/sellers/${sellerId}/listings`);
     return handleResponse(response);
   }
 };

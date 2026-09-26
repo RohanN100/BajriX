@@ -1,6 +1,8 @@
 package com.bajrix.marketplace.repository;
 
 import com.bajrix.marketplace.domain.entity.SellerListing;
+import java.util.List;
+import java.util.UUID;
 import com.bajrix.marketplace.domain.enums.ListingStatus;
 import com.bajrix.marketplace.domain.enums.SellerStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +21,9 @@ public interface SellerListingRepository extends JpaRepository<SellerListing, UU
      * Finds all listings for a product offered by APPROVED sellers with ACTIVE listing status,
      * ordered by price ascending (best price first).
      */
+	
+	List<SellerListing> findBySellerId(UUID sellerId);
+	
     @Query("SELECT sl FROM SellerListing sl " +
            "JOIN FETCH sl.seller s " +
            "JOIN FETCH sl.product p " +
@@ -32,6 +37,7 @@ public interface SellerListingRepository extends JpaRepository<SellerListing, UU
             @Param("listingStatus") ListingStatus listingStatus
     );
 
+    
     /**
      * Finds all listings belonging to a specific seller (for seller dashboard).
      */

@@ -1,6 +1,9 @@
 package com.bajrix.marketplace.controller;
 
 import com.bajrix.marketplace.dto.CategoryDTO;
+import com.bajrix.marketplace.dto.CreateProductRequest;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import com.bajrix.marketplace.dto.ProductDetailDTO;
 import com.bajrix.marketplace.dto.ProductSummaryDTO;
 import com.bajrix.marketplace.service.ProductCatalogService;
@@ -51,5 +54,15 @@ public class BuyerProductController {
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryDTO>> getCategories() {
         return ResponseEntity.ok(productCatalogService.getAllCategories());
+    }
+    @PostMapping
+    public ResponseEntity<ProductSummaryDTO> createProduct(
+            @Valid @RequestBody CreateProductRequest request
+    ) {
+        ProductSummaryDTO createdProduct =
+                productCatalogService.createProduct(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(createdProduct);
     }
 }
